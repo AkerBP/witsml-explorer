@@ -1,13 +1,16 @@
+import {
+  ContentType,
+  ExportableContentTableColumn
+} from "components/ContentViews/table";
+import formatDateString from "components/DateFormatter";
+import { ContentViewDimensionsContext } from "components/PageLayout";
+import OperationContext from "contexts/operationContext";
+import { DateTimeFormat, TimeZone } from "contexts/operationStateReducer";
 import { ECharts } from "echarts";
 import ReactEcharts from "echarts-for-react";
+import { CurveSpecification } from "models/logData";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import OperationContext from "../../contexts/operationContext";
-import { DateTimeFormat, TimeZone } from "../../contexts/operationStateReducer";
-import { CurveSpecification } from "../../models/logData";
-import { Colors } from "../../styles/Colors";
-import formatDateString from "../DateFormatter";
-import { ContentViewDimensionsContext } from "../PageLayout";
-import { ContentType, ExportableContentTableColumn } from "./table/tableParts";
+import { Colors } from "styles/Colors";
 
 const COLUMN_WIDTH = 135;
 const MNEMONIC_LABEL_WIDTH = COLUMN_WIDTH - 10;
@@ -29,7 +32,16 @@ interface CurveValuesPlotProps {
 
 export const CurveValuesPlot = React.memo(
   (props: CurveValuesPlotProps): React.ReactElement => {
-    const { data, columns, name, autoRefresh, isDescending = false } = props;
+    const {
+      data,
+      columns: rawColumns,
+      name,
+      autoRefresh,
+      isDescending = false
+    } = props;
+    const columns = rawColumns.filter(
+      (col, index) => col.type === ContentType.Number || index === 0
+    );
     const {
       operationState: { colors, dateTimeFormat }
     } = useContext(OperationContext);
@@ -319,8 +331,8 @@ const getChartOption = (
             curve.length > LABEL_MAXIMUM_LENGHT
               ? curve.substring(0, LABEL_MAXIMUM_LENGHT) + "..."
               : curve;
-          let minValue = minMaxValue.minValue?.toFixed(3);
-          let maxValue = minMaxValue.maxValue?.toFixed(3);
+          let minValue = minMaxValue.minValue?.toFixed(3) ?? "NaN";
+          let maxValue = minMaxValue.maxValue?.toFixed(3) ?? "NaN";
           if (minValue.length > LABEL_NUMBER_MAX_LENGTH) {
             minValue =
               minValue.substring(0, LABEL_NUMBER_MAX_LENGTH - 2) + "...";
@@ -445,7 +457,7 @@ const timeFormatter = (params: number, dateTimeFormat: DateTimeFormat) => {
 };
 
 const depthFormatter = (params: number, indexUnit: string) => {
-  return `${params.toFixed(2)} ${indexUnit}`;
+  return `${params?.toFixed(2)} ${indexUnit}`;
 };
 
 const getExtraWidth = (

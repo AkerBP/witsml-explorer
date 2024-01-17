@@ -1,20 +1,24 @@
 ﻿import { Typography } from "@equinor/eds-core-react";
 import { Divider, MenuItem } from "@material-ui/core";
-import React, { useContext } from "react";
-import NavigationContext from "../../contexts/navigationContext";
-import OperationContext from "../../contexts/operationContext";
-import OperationType from "../../contexts/operationType";
-import { useOpenInQueryView } from "../../hooks/useOpenInQueryView";
-import { ObjectType } from "../../models/objectType";
-import Rig from "../../models/rig";
-import { colors } from "../../styles/Colors";
-import { PropertiesModalMode } from "../Modals/ModalParts";
+import { BatchModifyMenuItem } from "components/ContextMenus/BatchModifyMenuItem";
+import ContextMenu from "components/ContextMenus/ContextMenu";
+import { StyledIcon } from "components/ContextMenus/ContextMenuUtils";
+import {
+  ObjectContextMenuProps,
+  ObjectMenuItems
+} from "components/ContextMenus/ObjectMenuItems";
+import { PropertiesModalMode } from "components/Modals/ModalParts";
 import RigPropertiesModal, {
   RigPropertiesModalProps
-} from "../Modals/RigPropertiesModal";
-import ContextMenu from "./ContextMenu";
-import { StyledIcon } from "./ContextMenuUtils";
-import { ObjectContextMenuProps, ObjectMenuItems } from "./ObjectMenuItems";
+} from "components/Modals/RigPropertiesModal";
+import NavigationContext from "contexts/navigationContext";
+import OperationContext from "contexts/operationContext";
+import OperationType from "contexts/operationType";
+import { useOpenInQueryView } from "hooks/useOpenInQueryView";
+import { ObjectType } from "models/objectType";
+import Rig from "models/rig";
+import React, { useContext } from "react";
+import { colors } from "styles/Colors";
 
 const RigContextMenu = (props: ObjectContextMenuProps): React.ReactElement => {
   const { checkedObjects, wellbore } = props;
@@ -23,6 +27,7 @@ const RigContextMenu = (props: ObjectContextMenuProps): React.ReactElement => {
   const openInQueryView = useOpenInQueryView();
 
   const onClickModify = async () => {
+    dispatchOperation({ type: OperationType.HideContextMenu });
     const mode = PropertiesModalMode.Edit;
     const modifyRigObjectProps: RigPropertiesModalProps = {
       mode,
@@ -33,12 +38,16 @@ const RigContextMenu = (props: ObjectContextMenuProps): React.ReactElement => {
       type: OperationType.DisplayModal,
       payload: <RigPropertiesModal {...modifyRigObjectProps} />
     });
-    dispatchOperation({ type: OperationType.HideContextMenu });
   };
 
   const extraMenuItems = (): React.ReactElement[] => {
     return [
       <Divider key={"divider"} />,
+      <BatchModifyMenuItem
+        key="batchModify"
+        checkedObjects={checkedObjects}
+        objectType={ObjectType.Rig}
+      />,
       <MenuItem
         key={"properties"}
         onClick={onClickModify}

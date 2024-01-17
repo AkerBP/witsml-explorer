@@ -1,37 +1,44 @@
 import { Divider, Typography } from "@equinor/eds-core-react";
 import { MenuItem } from "@material-ui/core";
-import React from "react";
-import { SelectLogCurveInfoAction } from "../../contexts/navigationActions";
-import {
-  DisplayModalAction,
-  HideContextMenuAction,
-  HideModalAction
-} from "../../contexts/operationStateReducer";
-import OperationType from "../../contexts/operationType";
-import { ComponentType } from "../../models/componentType";
-import { createComponentReferences } from "../../models/jobs/componentReferences";
-import LogObject from "../../models/logObject";
-import { ObjectType } from "../../models/objectType";
-import { Server } from "../../models/server";
-import { JobType } from "../../services/jobService";
-import { colors } from "../../styles/Colors";
-import { LogCurveInfoRow } from "../ContentViews/LogCurveInfoListView";
-import CopyRangeModal, { CopyRangeModalProps } from "../Modals/CopyRangeModal";
-import LogCurveInfoPropertiesModal from "../Modals/LogCurveInfoPropertiesModal";
-import SelectIndexToDisplayModal from "../Modals/SelectIndexToDisplayModal";
-import ContextMenu from "./ContextMenu";
+import { LogCurveInfoRow } from "components/ContentViews/LogCurveInfoListView";
+import ContextMenu from "components/ContextMenus/ContextMenu";
 import {
   StyledIcon,
   menuItemText,
   onClickDeleteComponents,
   onClickShowObjectOnServer
-} from "./ContextMenuUtils";
-import { CopyComponentsToServerMenuItem } from "./CopyComponentsToServer";
-import { copyComponents } from "./CopyUtils";
-import NestedMenuItem from "./NestedMenuItem";
+} from "components/ContextMenus/ContextMenuUtils";
+import { CopyComponentsToServerMenuItem } from "components/ContextMenus/CopyComponentsToServer";
+import { copyComponents } from "components/ContextMenus/CopyUtils";
+import NestedMenuItem from "components/ContextMenus/NestedMenuItem";
 import AnalyzeGapModal, {
   AnalyzeGapModalProps
-} from "../Modals/AnalyzeGapModal";
+} from "components/Modals/AnalyzeGapModal";
+import CopyRangeModal, {
+  CopyRangeModalProps
+} from "components/Modals/CopyRangeModal";
+import LogCurveInfoPropertiesModal from "components/Modals/LogCurveInfoPropertiesModal";
+import {
+  LogCurvePriorityModal,
+  LogCurvePriorityModalProps
+} from "components/Modals/LogCurvePriorityModal";
+import SelectIndexToDisplayModal from "components/Modals/SelectIndexToDisplayModal";
+import { SelectLogCurveInfoAction } from "contexts/navigationActions";
+import {
+  DisplayModalAction,
+  HideContextMenuAction,
+  HideModalAction
+} from "contexts/operationStateReducer";
+import OperationType from "contexts/operationType";
+import { ComponentType } from "models/componentType";
+import { createComponentReferences } from "models/jobs/componentReferences";
+import LogObject from "models/logObject";
+import { ObjectType } from "models/objectType";
+import { Server } from "models/server";
+import React from "react";
+import { JobType } from "services/jobService";
+import LogCurvePriorityService from "services/logCurvePriorityService";
+import { colors } from "styles/Colors";
 
 export interface LogCurveInfoContextMenuProps {
   checkedLogCurveInfoRows: LogCurveInfoRow[];
@@ -42,6 +49,8 @@ export interface LogCurveInfoContextMenuProps {
   selectedLog: LogObject;
   selectedServer: Server;
   servers: Server[];
+  prioritizedCurves: string[];
+  setPrioritizedCurves: (prioritizedCurves: string[]) => void;
 }
 
 const LogCurveInfoContextMenu = (
@@ -53,8 +62,21 @@ const LogCurveInfoContextMenu = (
     dispatchNavigation,
     selectedLog,
     selectedServer,
-    servers
+    servers,
+    prioritizedCurves,
+    setPrioritizedCurves
   } = props;
+
+  const onlyPrioritizedCurvesAreChecked = checkedLogCurveInfoRows.every(
+    (row, index) =>
+      prioritizedCurves.includes(row.mnemonic) ||
+      (checkedLogCurveInfoRows.length > 1 && index === 0)
+  );
+
+  const checkedLogCurveInfoRowsWithoutIndexCurve =
+    checkedLogCurveInfoRows.filter(
+      (lc) => lc.mnemonic !== selectedLog.indexCurve
+    );
 
   const onClickOpen = () => {
     dispatchOperation({ type: OperationType.HideContextMenu });
@@ -82,6 +104,7 @@ const LogCurveInfoContextMenu = (
   };
 
   const onClickProperties = () => {
+    dispatchOperation({ type: OperationType.HideContextMenu });
     const logCurveInfo = checkedLogCurveInfoRows[0].logCurveInfo;
     const logCurveInfoPropertiesModalProps = {
       logCurveInfo,
@@ -94,10 +117,10 @@ const LogCurveInfoContextMenu = (
         <LogCurveInfoPropertiesModal {...logCurveInfoPropertiesModalProps} />
       )
     });
-    dispatchOperation({ type: OperationType.HideContextMenu });
   };
 
   const onClickAnalyzeGaps = () => {
+    dispatchOperation({ type: OperationType.HideContextMenu });
     const logObject = selectedLog;
     const mnemonics = checkedLogCurveInfoRows.map((lc) => lc.mnemonic);
     const analyzeGapModalProps: AnalyzeGapModalProps = { logObject, mnemonics };
@@ -105,14 +128,60 @@ const LogCurveInfoContextMenu = (
       type: OperationType.DisplayModal,
       payload: <AnalyzeGapModal {...analyzeGapModalProps} />
     });
+  };
+
+  const onClickEditPriority = () => {
     dispatchOperation({ type: OperationType.HideContextMenu });
+    const logCurvePriorityModalProps: LogCurvePriorityModalProps = {
+      wellUid: selectedLog.wellUid,
+      wellboreUid: selectedLog.wellboreUid,
+      prioritizedCurves,
+      setPrioritizedCurves
+    };
+    dispatchOperation({
+      type: OperationType.DisplayModal,
+      payload: <LogCurvePriorityModal {...logCurvePriorityModalProps} />
+    });
+  };
+
+  const onClickSetPriority = async () => {
+    dispatchOperation({ type: OperationType.HideContextMenu });
+    const newCurvesToPrioritize = checkedLogCurveInfoRows.map(
+      (lc) => lc.mnemonic
+    );
+    const curvesToPrioritize = Array.from(
+      new Set(prioritizedCurves.concat(newCurvesToPrioritize))
+    );
+    const newPrioritizedCurves =
+      await LogCurvePriorityService.setPrioritizedCurves(
+        selectedLog.wellUid,
+        selectedLog.wellboreUid,
+        curvesToPrioritize
+      );
+    setPrioritizedCurves(newPrioritizedCurves);
+  };
+
+  const onClickRemovePriority = async () => {
+    dispatchOperation({ type: OperationType.HideContextMenu });
+    const curvesToDelete = checkedLogCurveInfoRows.map((lc) => lc.mnemonic);
+    const curvesToPrioritize = prioritizedCurves.filter(
+      (curve) => !curvesToDelete.includes(curve)
+    );
+    const newPrioritizedCurves =
+      await LogCurvePriorityService.setPrioritizedCurves(
+        selectedLog.wellUid,
+        selectedLog.wellboreUid,
+        curvesToPrioritize
+      );
+    setPrioritizedCurves(newPrioritizedCurves);
   };
 
   const toDelete = createComponentReferences(
-    checkedLogCurveInfoRows.map((lc) => lc.mnemonic),
+    checkedLogCurveInfoRowsWithoutIndexCurve.map((lc) => lc.mnemonic),
     selectedLog,
     ComponentType.Mnemonic
   );
+
   return (
     <ContextMenu
       menuItems={[
@@ -175,7 +244,7 @@ const LogCurveInfoContextMenu = (
               JobType.DeleteComponents
             )
           }
-          disabled={checkedLogCurveInfoRows.length === 0}
+          disabled={checkedLogCurveInfoRowsWithoutIndexCurve.length === 0}
         >
           <StyledIcon
             name="deleteToTrash"
@@ -185,7 +254,7 @@ const LogCurveInfoContextMenu = (
             {menuItemText(
               "delete",
               ComponentType.Mnemonic,
-              checkedLogCurveInfoRows
+              checkedLogCurveInfoRowsWithoutIndexCurve
             )}
           </Typography>
         </MenuItem>,
@@ -208,12 +277,40 @@ const LogCurveInfoContextMenu = (
         </NestedMenuItem>,
         <MenuItem
           key={"analyzeGaps"}
-          onClick={
-            onClickAnalyzeGaps
-          } /*disabled={checkedLogCurveInfoRows.length !== 1}*/
+          onClick={onClickAnalyzeGaps}
+          disabled={checkedLogCurveInfoRowsWithoutIndexCurve.length === 0}
         >
           <StyledIcon name="beat" color={colors.interactive.primaryResting} />
           <Typography color={"primary"}>Analyze gaps</Typography>
+        </MenuItem>,
+        <MenuItem
+          key={"setPriority"}
+          onClick={() =>
+            onlyPrioritizedCurvesAreChecked
+              ? onClickRemovePriority()
+              : onClickSetPriority()
+          }
+        >
+          <StyledIcon
+            name={
+              onlyPrioritizedCurvesAreChecked
+                ? "favoriteFilled"
+                : "favoriteOutlined"
+            }
+            color={colors.interactive.primaryResting}
+          />
+          <Typography color={"primary"}>
+            {onlyPrioritizedCurvesAreChecked
+              ? "Remove Priority"
+              : "Set Priority"}
+          </Typography>
+        </MenuItem>,
+        <MenuItem key={"editPriority"} onClick={onClickEditPriority}>
+          <StyledIcon
+            name="favoriteOutlined"
+            color={colors.interactive.primaryResting}
+          />
+          <Typography color={"primary"}>Edit Priority</Typography>
         </MenuItem>,
         <Divider key={"divider"} />,
         <MenuItem

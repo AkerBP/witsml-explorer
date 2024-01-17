@@ -1,47 +1,50 @@
 import { Typography } from "@equinor/eds-core-react";
 import { Divider, MenuItem } from "@material-ui/core";
-import React, { useContext } from "react";
-import { v4 as uuid } from "uuid";
-import ModificationType from "../../contexts/modificationType";
-import NavigationContext from "../../contexts/navigationContext";
-import { treeNodeIsExpanded } from "../../contexts/navigationStateReducer";
-import NavigationType from "../../contexts/navigationType";
+import {
+  StoreFunction,
+  TemplateObjects
+} from "components/ContentViews/QueryViewUtils";
+import { WellRow } from "components/ContentViews/WellsListView";
+import ContextMenu from "components/ContextMenus/ContextMenu";
+import { StyledIcon } from "components/ContextMenus/ContextMenuUtils";
+import NestedMenuItem from "components/ContextMenus/NestedMenuItem";
+import ConfirmModal from "components/Modals/ConfirmModal";
+import DeleteEmptyMnemonicsModal, {
+  DeleteEmptyMnemonicsModalProps
+} from "components/Modals/DeleteEmptyMnemonicsModal";
+import MissingDataAgentModal, {
+  MissingDataAgentModalProps
+} from "components/Modals/MissingDataAgentModal";
+import { PropertiesModalMode } from "components/Modals/ModalParts";
+import WellBatchUpdateModal, {
+  WellBatchUpdateModalProps
+} from "components/Modals/WellBatchUpdateModal";
+import WellPropertiesModal, {
+  WellPropertiesModalProps
+} from "components/Modals/WellPropertiesModal";
+import WellborePropertiesModal, {
+  WellborePropertiesModalProps
+} from "components/Modals/WellborePropertiesModal";
+import ModificationType from "contexts/modificationType";
+import NavigationContext from "contexts/navigationContext";
+import { treeNodeIsExpanded } from "contexts/navigationStateReducer";
+import NavigationType from "contexts/navigationType";
 import {
   DisplayModalAction,
   HideContextMenuAction,
   HideModalAction
-} from "../../contexts/operationStateReducer";
-import OperationType from "../../contexts/operationType";
-import { useOpenInQueryView } from "../../hooks/useOpenInQueryView";
-import { DeleteWellJob } from "../../models/jobs/deleteJobs";
-import { Server } from "../../models/server";
-import Well from "../../models/well";
-import Wellbore from "../../models/wellbore";
-import JobService, { JobType } from "../../services/jobService";
-import WellService from "../../services/wellService";
-import { colors } from "../../styles/Colors";
-import { StoreFunction, TemplateObjects } from "../ContentViews/QueryViewUtils";
-import { WellRow } from "../ContentViews/WellsListView";
-import ConfirmModal from "../Modals/ConfirmModal";
-import DeleteEmptyMnemonicsModal, {
-  DeleteEmptyMnemonicsModalProps
-} from "../Modals/DeleteEmptyMnemonicsModal";
-import MissingDataAgentModal, {
-  MissingDataAgentModalProps
-} from "../Modals/MissingDataAgentModal";
-import { PropertiesModalMode } from "../Modals/ModalParts";
-import WellBatchUpdateModal, {
-  WellBatchUpdateModalProps
-} from "../Modals/WellBatchUpdateModal";
-import WellPropertiesModal, {
-  WellPropertiesModalProps
-} from "../Modals/WellPropertiesModal";
-import WellborePropertiesModal, {
-  WellborePropertiesModalProps
-} from "../Modals/WellborePropertiesModal";
-import ContextMenu from "./ContextMenu";
-import { StyledIcon } from "./ContextMenuUtils";
-import NestedMenuItem from "./NestedMenuItem";
+} from "contexts/operationStateReducer";
+import OperationType from "contexts/operationType";
+import { useOpenInQueryView } from "hooks/useOpenInQueryView";
+import { DeleteWellJob } from "models/jobs/deleteJobs";
+import { Server } from "models/server";
+import Well from "models/well";
+import Wellbore from "models/wellbore";
+import React, { useContext } from "react";
+import JobService, { JobType } from "services/jobService";
+import WellService from "services/wellService";
+import { colors } from "styles/Colors";
+import { v4 as uuid } from "uuid";
 
 export interface WellContextMenuProps {
   dispatchOperation: (
@@ -141,6 +144,7 @@ const WellContextMenu = (props: WellContextMenuProps): React.ReactElement => {
   };
 
   const deleteWell = async () => {
+    dispatchOperation({ type: OperationType.HideContextMenu });
     dispatchOperation({ type: OperationType.HideModal });
     const job: DeleteWellJob = {
       toDelete: {
@@ -149,7 +153,6 @@ const WellContextMenu = (props: WellContextMenuProps): React.ReactElement => {
       }
     };
     await JobService.orderJob(JobType.DeleteWell, job);
-    dispatchOperation({ type: OperationType.HideContextMenu });
   };
 
   const onClickDelete = async () => {
@@ -176,8 +179,7 @@ const WellContextMenu = (props: WellContextMenuProps): React.ReactElement => {
 
   const onClickDeleteEmptyMnemonics = async () => {
     const deleteEmptyMnemonicsModalProps: DeleteEmptyMnemonicsModalProps = {
-      wells: [well],
-      dispatchOperation: dispatchOperation
+      wells: [well]
     };
     const action: DisplayModalAction = {
       type: OperationType.DisplayModal,
@@ -219,10 +221,10 @@ const WellContextMenu = (props: WellContextMenuProps): React.ReactElement => {
   };
 
   const onClickShowOnServer = async (server: Server) => {
+    dispatchOperation({ type: OperationType.HideContextMenu });
     const host = `${window.location.protocol}//${window.location.host}`;
     const wellUrl = `${host}/?serverUrl=${server.url}&wellUid=${well.uid}`;
     window.open(wellUrl);
-    dispatchOperation({ type: OperationType.HideContextMenu });
   };
 
   const onClickBatchUpdate = () => {

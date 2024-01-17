@@ -1,8 +1,8 @@
-import JobInfo from "../models/jobs/jobInfo";
-import { Server } from "../models/server";
-import { ApiClient } from "./apiClient";
-import AuthorizationService from "./authorizationService";
-import NotificationService from "./notificationService";
+import JobInfo from "models/jobs/jobInfo";
+import { Server } from "models/server";
+import { ApiClient } from "services/apiClient";
+import AuthorizationService from "services/authorizationService";
+import NotificationService from "services/notificationService";
 
 export default class JobService {
   public static async orderJob(
@@ -122,6 +122,7 @@ export enum JobType {
   ModifyWell = "ModifyWell",
   ModifyWellbore = "ModifyWellbore",
   ModifyObjectOnWellbore = "ModifyObjectOnWellbore",
+  BatchModifyObjectsOnWellbore = "BatchModifyObjectsOnWellbore",
   TrimLogObject = "TrimLogObject",
   BatchModifyWell = "BatchModifyWell",
   ImportLogData = "ImportLogData",
