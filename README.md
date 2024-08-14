@@ -20,6 +20,9 @@ Witsml Explorer is a data management tool used for browsing and editing data dir
 ## Witsml as a Nuget package
 Please see [nuget_witsml.md](/Docs/nuget_witsml.md)
 
+## Witsml Explorer Desktop Edition
+Please see [desktop edition readme](/Src/WitsmlExplorer.Desktop/README.md)
+
 ## Contributing
 Please see our [contributing.md](/CONTRIBUTING.md).
 
@@ -37,6 +40,9 @@ Please see our [server readme](./Docker/Server/README.md).
 
 ## API custom client access
 Please visit [API client access](/Docs/APICLIENT.md).
+
+## Enable HTTP WITSML servers
+Please see [enable HTTP](/Docs/enable_http.md).
 
 ## Community
 Please read and respect the [CODE OF CONDUCT](/CODE_OF_CONDUCT.md)

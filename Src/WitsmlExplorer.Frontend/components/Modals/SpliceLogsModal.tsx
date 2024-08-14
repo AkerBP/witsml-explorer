@@ -1,24 +1,24 @@
 import { Accordion, TextField, Typography } from "@equinor/eds-core-react";
-import { Draggable, DummyDrop } from "../StyledComponents/DragDropTable";
 import { StyledAccordionHeader } from "components/Modals/LogComparisonModal";
 import ModalDialog, { ModalWidth } from "components/Modals/ModalDialog";
 import { validText } from "components/Modals/ModalParts";
-import OperationContext from "contexts/operationContext";
 import OperationType from "contexts/operationType";
+import { useOperationState } from "hooks/useOperationState";
 import SpliceLogsJob from "models/jobs/spliceLogsJob";
 import LogObject from "models/logObject";
 import ObjectOnWellbore, { toObjectReferences } from "models/objectOnWellbore";
 import { ObjectType } from "models/objectType";
 import {
+  ChangeEvent,
   DragEvent,
   ReactElement,
-  useContext,
   useEffect,
   useState
 } from "react";
 import JobService, { JobType } from "services/jobService";
 import styled from "styled-components";
 import { v4 as uuid } from "uuid";
+import { Draggable, DummyDrop } from "../StyledComponents/DragDropTable";
 
 const lastId = "dummyLastId";
 
@@ -31,7 +31,7 @@ const SpliceLogsModal = (props: SpliceLogsProps): ReactElement => {
   const {
     operationState: { colors },
     dispatchOperation
-  } = useContext(OperationContext);
+  } = useOperationState();
   const [draggedId, setDraggedId] = useState(null);
   const [draggedOverId, setDraggedOverId] = useState(null);
   const [orderedLogs, setOrderedLogs] = useState<LogObject[]>([]);
@@ -154,7 +154,9 @@ const SpliceLogsModal = (props: SpliceLogsProps): ReactElement => {
                 ? "The name must be 1-64 characters"
                 : ""
             }
-            onChange={(e: any) => setNewLogName(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setNewLogName(e.target.value)
+            }
           />
         </>
       }

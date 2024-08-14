@@ -1,5 +1,5 @@
 import { Typography } from "@equinor/eds-core-react";
-import { Divider, MenuItem } from "@material-ui/core";
+import { Divider, MenuItem } from "@mui/material";
 import { QueryClient } from "@tanstack/react-query";
 import { WITSML_INDEX_TYPE_MD } from "components/Constants";
 import {
@@ -20,9 +20,9 @@ import {
 } from "components/ContextMenus/CopyUtils";
 import NestedMenuItem from "components/ContextMenus/NestedMenuItem";
 import { useClipboardReferencesOfType } from "components/ContextMenus/UseClipboardReferences";
-import { IndexCurve } from "components/Modals/LogPropertiesModal";
 import { DispatchOperation } from "contexts/operationStateReducer";
 import { OpenInQueryView } from "hooks/useOpenInQueryView";
+import { IndexCurve } from "models/indexCurve";
 import LogObject from "models/logObject";
 import ObjectOnWellbore from "models/objectOnWellbore";
 import { ObjectType } from "models/objectType";

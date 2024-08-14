@@ -1,4 +1,4 @@
-import { TableBody, TableHead, useTheme } from "@material-ui/core";
+import { TableBody, TableHead } from "@mui/material";
 import {
   ColumnSizingState,
   Header,
@@ -30,6 +30,7 @@ import {
   TableContainer
 } from "components/ContentViews/table/contentTableStyles";
 import {
+  booleanSortingFn,
   calculateHorizontalSpace,
   calculateRowHeight,
   componentSortingFn,
@@ -45,10 +46,11 @@ import {
   ContentTableColumn,
   ContentTableProps
 } from "components/ContentViews/table/tableParts";
-import OperationContext from "contexts/operationContext";
+import { UserTheme } from "contexts/operationStateReducer";
+import { useOperationState } from "hooks/useOperationState";
 import { indexToNumber } from "models/logObject";
 import * as React from "react";
-import { Fragment, useContext, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Colors } from "styles/Colors";
 import Icon from "styles/Icons";
 
@@ -81,8 +83,8 @@ export const ContentTable = React.memo(
       autoRefresh = false
     } = contentTableProps;
     const {
-      operationState: { colors }
-    } = useContext(OperationContext);
+      operationState: { colors, theme }
+    } = useOperationState();
     const [previousIndex, setPreviousIndex] = useState<number>(null);
     const [rowSelection, setRowSelection] = useState<RowSelectionState>(
       Object.assign(
@@ -94,7 +96,7 @@ export const ContentTable = React.memo(
       initializeColumnVisibility(viewId)
     );
     const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
-    const isCompactMode = useTheme().props.MuiCheckbox?.size === "small";
+    const isCompactMode = theme === UserTheme.Compact;
     const cellHeight = isCompactMode ? 30 : 53;
     const headCellHeight = isCompactMode ? 35 : 55;
     const noData = useMemo(() => [], []);
@@ -132,6 +134,15 @@ export const ContentTable = React.memo(
           const a = rowA.getValue(columnId) == null;
           const b = rowB.getValue(columnId) == null;
           return a === b ? 0 : a ? -1 : 1;
+        },
+        [booleanSortingFn]: (
+          rowA: Row<any>,
+          rowB: Row<any>,
+          columnId: string
+        ) => {
+          const a = rowA.getValue(columnId);
+          const b = rowB.getValue(columnId);
+          return a === b ? 0 : a ? 1 : -1;
         }
       },
       columnResizeMode: "onChange",

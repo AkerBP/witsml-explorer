@@ -1,7 +1,15 @@
-import { Checkbox, IconButton, useTheme } from "@material-ui/core";
-import { ColumnDef, Row, SortingFn, Table } from "@tanstack/react-table";
+import { Checkbox, IconButton } from "@mui/material";
+import {
+  ColumnDef,
+  FilterFn,
+  FilterMeta,
+  Row,
+  SortingFn,
+  Table
+} from "@tanstack/react-table";
 import {
   activeId,
+  booleanSortingFn,
   calculateColumnWidth,
   componentSortingFn,
   expanderId,
@@ -13,9 +21,10 @@ import {
   ContentTableColumn,
   ContentType
 } from "components/ContentViews/table/tableParts";
-import OperationContext from "contexts/operationContext";
-import { DecimalPreference } from "contexts/operationStateReducer";
-import { useContext, useMemo } from "react";
+import { getSearchRegex } from "contexts/filter";
+import { DecimalPreference, UserTheme } from "contexts/operationStateReducer";
+import { useOperationState } from "hooks/useOperationState";
+import { useMemo } from "react";
 import Icon from "styles/Icons";
 import {
   STORAGE_CONTENTTABLE_ORDER_KEY,
@@ -27,6 +36,7 @@ declare module "@tanstack/react-table" {
   interface SortingFns {
     [measureSortingFn]: SortingFn<unknown>;
     [componentSortingFn]: SortingFn<unknown>;
+    [booleanSortingFn]: SortingFn<unknown>;
   }
 }
 
@@ -37,11 +47,10 @@ export const useColumnDef = (
   checkableRows: boolean,
   stickyLeftColumns: number
 ) => {
-  const isCompactMode = useTheme().props.MuiCheckbox?.size === "small";
-
   const {
-    operationState: { decimals }
-  } = useContext(OperationContext);
+    operationState: { decimals, theme }
+  } = useOperationState();
+  const isCompactMode = theme === UserTheme.Compact;
 
   return useMemo(() => {
     const savedWidths = getLocalStorageItem<{ [label: string]: number }>(
@@ -53,14 +62,14 @@ export const useColumnDef = (
         savedWidths?.[column.label] ??
         calculateColumnWidth(column.label, isCompactMode, column.type);
       return {
-        id: column.label,
-        accessorKey: column.property,
+        id: column.property,
+        accessorFn: (data) => data[column.property],
         header: column.label,
         size: width,
         meta: { type: column.type },
-        sortingFn: getSortingFn(column.type),
-        enableColumnFilter: column.filterFn != null,
-        filterFn: column.filterFn,
+        sortingFn: getSortingFn(column),
+        enableColumnFilter: column.type !== ContentType.Component,
+        filterFn: getFilterFn(column),
         ...addComponentCell(column.type),
         ...addActiveCurveFiltering(column.label),
         ...addDecimalPreference(column.type, decimals)
@@ -228,11 +237,28 @@ const getCheckableRowsColumnDef = (
   };
 };
 
-const getSortingFn = (contentType: ContentType) => {
-  if (contentType == ContentType.Measure) {
+const getSortingFn = (column: ContentTableColumn) => {
+  if (column.type == ContentType.Measure) {
     return measureSortingFn;
-  } else if (contentType == ContentType.Number) {
+  } else if (column.type == ContentType.Number) {
     return "alphanumeric";
+  } else if (column.label === activeId) {
+    return booleanSortingFn;
   }
   return "text";
+};
+
+const getFilterFn = (column: ContentTableColumn): FilterFn<any> => {
+  return (
+    row: Row<any>,
+    id: string,
+    value: any,
+    addMeta: (meta: FilterMeta) => void
+  ): boolean => {
+    const filter = getSearchRegex(value, false);
+    return (
+      (!value || filter.test(row.getValue(id) ?? "")) &&
+      (!column.filterFn || column.filterFn(row, id, value, addMeta))
+    );
+  };
 };

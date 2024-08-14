@@ -4,7 +4,6 @@ import {
   Icon,
   Typography
 } from "@equinor/eds-core-react";
-import { CloudUpload } from "@material-ui/icons";
 import { StyledAccordionHeader } from "components/Modals/LogComparisonModal";
 import {
   objectToProperties,
@@ -16,15 +15,15 @@ import ModalDialog, {
 } from "components/Modals/ModalDialog";
 import { ReportModal } from "components/Modals/ReportModal";
 import { Button } from "components/StyledComponents/Button";
-import OperationContext from "contexts/operationContext";
 import OperationType from "contexts/operationType";
 import useExport from "hooks/useExport";
 import { useLocalStorageState } from "hooks/useLocalStorageState";
+import { useOperationState } from "hooks/useOperationState";
 import MissingDataJob, { MissingDataCheck } from "models/jobs/missingDataJob";
 import WellReference from "models/jobs/wellReference";
 import WellboreReference from "models/jobs/wellboreReference";
 import { ObjectType } from "models/objectType";
-import { useContext, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import JobService, { JobType } from "services/jobService";
 import styled from "styled-components";
 import { STORAGE_MISSING_DATA_AGENT_CHECKS_KEY } from "tools/localStorageHelpers";
@@ -48,7 +47,7 @@ const MissingDataAgentModal = (
   const {
     dispatchOperation,
     operationState: { colors }
-  } = useContext(OperationContext);
+  } = useOperationState();
   const [missingDataChecks, setMissingDataChecks] = useLocalStorageState<
     MissingDataCheck[]
   >(STORAGE_MISSING_DATA_AGENT_CHECKS_KEY, {
@@ -237,6 +236,8 @@ const MissingDataAgentModal = (
       confirmText={`OK`}
       showCancelButton={true}
       width={ModalWidth.MEDIUM}
+      height="800px"
+      minHeight="650px"
       isLoading={false}
       content={
         <ModalContentLayout>
@@ -262,6 +263,7 @@ const MissingDataAgentModal = (
           {missingDataChecks.map((missingDataCheck) => (
             <CheckLayout key={missingDataCheck.id}>
               <Autocomplete
+                dropdownHeight={300}
                 id={`object${missingDataCheck.id}`}
                 label="Select object"
                 options={missingDataObjectOptions}
@@ -272,6 +274,7 @@ const MissingDataAgentModal = (
                 }
               />
               <Autocomplete
+                dropdownHeight={300}
                 id={`properties${missingDataCheck.id}`}
                 disabled={
                   !missingDataObjectOptions.includes(
@@ -317,12 +320,12 @@ const MissingDataAgentModal = (
               paddingLeft: "0.5rem"
             }}
           >
-            <Button onClick={onClear}>
-              <Typography>Clear</Typography>
+            <Button onClick={onClear} variant="outlined">
+              Clear
             </Button>
-            <Button onClick={onImport}>
-              <CloudUpload />
-              <Typography noWrap>Import</Typography>
+            <Button onClick={onImport} variant="outlined">
+              <Icon name="cloudUpload" />
+              Import
               <input
                 ref={inputFileRef}
                 type="file"
@@ -331,8 +334,8 @@ const MissingDataAgentModal = (
                 hidden
               />
             </Button>
-            <Button onClick={onExport}>
-              <Typography>Export</Typography>
+            <Button onClick={onExport} variant="outlined">
+              Export
             </Button>
           </div>
         </ModalContentLayout>
