@@ -8,11 +8,11 @@ import {
   SetModeAction,
   SetThemeAction,
   SetTimeZoneAction,
+  SetUserRoleAction,
   TimeZone,
-  UserTheme,
   UserRole,
-  initOperationStateReducer,
-  SetUserRoleAction
+  UserTheme,
+  initOperationStateReducer
 } from "contexts/operationStateReducer";
 import OperationType from "contexts/operationType";
 import { enableDarkModeDebug } from "debugUtils/darkModeDebug";
