@@ -22,6 +22,7 @@
     <PackageVersion Include="Moq" Version="4.20.70" />
     <PackageVersion Include="NetCore.AutoRegisterDi" Version="2.2.1" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageVersion Include="OpenTelemetry.Api" Version="1.15.3" />
     <PackageVersion Include="Serilog" Version="3.1.1" />
     <PackageVersion Include="Serilog.AspNetCore" Version="8.0.1" />
     <PackageVersion Include="Serilog.Expressions" Version="4.0.0" />
@@ -34,7 +35,8 @@
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageVersion Include="System.Formats.Asn1" Version="9.0.9" />
     <PackageVersion Include="System.Runtime.Caching" Version="8.0.1" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="6.0.3" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="8.0.3" />
     <PackageVersion Include="System.ServiceModel.Http" Version="8.0.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.7.0" />
     <PackageVersion Include="LiteDB" Version="5.0.19" />
