@@ -138,22 +138,44 @@ public class AnalyzeGapWorker : BaseWorker<AnalyzeGapJob>, IWorker
                 : new TimeSpanIndex(job.TimeGapSize);
 
 
-            if (startIndexForGap < logCurveMinMaxIndex.MinIndex && isLogIncreasing)
+            if (job.IncludeMinMaxIndex)
             {
-                CreateNoDataReportItem(gapReportItems, startIndexForGap, logCurveMinMaxIndex.MinIndex, gapSize, logMnemonic.value, isLogIncreasing, false);
+                if (startIndexForGap < logCurveMinMaxIndex.MinIndex &&
+                    isLogIncreasing)
+                {
+                    CreateNoDataReportItem(gapReportItems, startIndexForGap,
+                        logCurveMinMaxIndex.MinIndex, gapSize,
+                        logMnemonic.value, isLogIncreasing, false);
+                }
+
+                if (endIndexForGap > logCurveMinMaxIndex.MaxIndex &&
+                    !isLogIncreasing)
+                {
+                    CreateNoDataReportItem(gapReportItems,
+                        logCurveMinMaxIndex.MaxIndex, endIndexForGap, gapSize,
+                        logMnemonic.value, isLogIncreasing, false);
+                }
             }
-            if (endIndexForGap > logCurveMinMaxIndex.MaxIndex && !isLogIncreasing)
-            {
-                CreateNoDataReportItem(gapReportItems, logCurveMinMaxIndex.MaxIndex, endIndexForGap, gapSize, logMnemonic.value, isLogIncreasing, false);
-            }
+
             gapReportItems.AddRange(GetAnalyzeGapReportItem(logMnemonic.value, inputAnalyzeDataList, gapSize, isLogIncreasing));
-            if (endIndexForGap > logCurveMinMaxIndex.MaxIndex && isLogIncreasing)
+
+            if (job.IncludeMinMaxIndex)
             {
-                CreateNoDataReportItem(gapReportItems, logCurveMinMaxIndex.MaxIndex, endIndexForGap, gapSize, logMnemonic.value, isLogIncreasing, false);
-            }
-            if (startIndexForGap < logCurveMinMaxIndex.MinIndex && !isLogIncreasing)
-            {
-                CreateNoDataReportItem(gapReportItems, startIndexForGap, logCurveMinMaxIndex.MinIndex, gapSize, logMnemonic.value, isLogIncreasing, false);
+                if (endIndexForGap > logCurveMinMaxIndex.MaxIndex &&
+                    isLogIncreasing)
+                {
+                    CreateNoDataReportItem(gapReportItems,
+                        logCurveMinMaxIndex.MaxIndex, endIndexForGap, gapSize,
+                        logMnemonic.value, isLogIncreasing, false);
+                }
+
+                if (startIndexForGap < logCurveMinMaxIndex.MinIndex &&
+                    !isLogIncreasing)
+                {
+                    CreateNoDataReportItem(gapReportItems, startIndexForGap,
+                        logCurveMinMaxIndex.MinIndex, gapSize,
+                        logMnemonic.value, isLogIncreasing, false);
+                }
             }
         }
         return GetGapReportResult(job, jobMnemonics, gapReportItems, isDepthLog, logUid, startIndex, endIndex);
@@ -212,8 +234,31 @@ public class AnalyzeGapWorker : BaseWorker<AnalyzeGapJob>, IWorker
                 ? $"Found {analyzeGapItems.Count} gaps in the {(isDepthLog ? "depth" : "time")} log '{logReference.Name}' {intervalMessage} for mnemonics: {mnemonics}."
                 : $"No gaps were found {intervalMessage} for mnemonics: {mnemonics}.",
             LogReference = logReference,
+            ReportItemColumns = CreateReportItemColumns(isDepthLog),
             ReportItems = analyzeGapItems
         };
+    }
+
+    private ICollection<ReportItemColumn> CreateReportItemColumns(bool isDepthLog)
+    {
+        if (isDepthLog)
+        {
+            return new List<ReportItemColumn>
+            {
+                new() { Name = "start", Type = ReportItemType.MEASURE },
+                new() { Name = "end", Type = ReportItemType.MEASURE },
+                new() { Name = "gapSize", Type = ReportItemType.MEASURE }
+            };
+        }
+        else
+        {
+            return new List<ReportItemColumn>
+            {
+                new() { Name = "start", Type = ReportItemType.DATE_TIME },
+                new() { Name = "end", Type = ReportItemType.DATE_TIME },
+                new() { Name = "gapSize", Type = ReportItemType.MEASURE }
+            };
+        }
     }
 
     /// <summary>
